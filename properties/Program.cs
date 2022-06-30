@@ -3,12 +3,21 @@
     internal class Program
     {
 
+      byte[] data;
+        public Program(byte[] data)
+        {
+            this.data = data;
+        }
 
-        public 
+      
+        public static void Main(string[] args)
+        {
 
+         
 
+        }
     }
-
+    
 
 
 
