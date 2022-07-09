@@ -6,19 +6,17 @@ using System.Threading.Tasks;
 
 namespace properties
 {
-
-    /*在properties中支持 
-    
-    // a = [6,7,8,9]  数字集合
-      只支持string=string
-    end
-     */
-    internal enum Token
+    internal class Token
     {
-
-        STRING,
-        EQUAL,
-        ENDLINE,
-        END,
+        TokenType type;
+        object? value;
+        public  Token(TokenType type)
+        {
+            this.type = type;
+        }
+        public Token(TokenType type, object? value) : this(type)
+        {
+            this.value = value;
+        }
     }
 }
