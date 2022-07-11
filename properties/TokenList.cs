@@ -19,5 +19,12 @@ namespace properties
         {
             tokens.Add(new Token(type,value));
         }
+        public void printAllToken()
+        {
+            foreach(Token token in tokens)
+            {
+                Console.WriteLine(token.ToString());
+            }
+        }
     }
 }

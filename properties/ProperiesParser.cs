@@ -8,19 +8,27 @@ namespace properties
 {
     internal class ProperiesParser
     {
-        int line = 1;
+      int line = 1;
         //int len;
-       TokenList tokens=new TokenList();
-        byte[] buff;
-        string buf;
-        void openFile(string filePath)
+      TokenList tokens  =new TokenList();
+      byte[] buf;
+        //string buf;
+      public  void openFile(string filePath)
         {
             //int buffSize = 1024 * 1024 * 4;//4M
             FileInfo fi = new FileInfo(filePath);
             int buffSize = (int)fi.Length;//配置文件大小不可能超过int的范围
-            buff = new byte[buffSize];
+
+
+
+
+            
+            buf = new byte[buffSize];
             FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-            fileStream.Read(buff, 0, buffSize);
+            fileStream.Read(buf, 0, buffSize);
+
+            
+
             fileStream.Close();
 
         }
@@ -39,18 +47,19 @@ namespace properties
             do
             {
                 i++;
-            } while (i < buff.Length && buff[i]!='\r')
+            } while (i < buf.Length && buf[i] != '\n');
 
 
         }
         public void parse()
         { 
-            for(int i = 0; i < buf.Length; )
+           
+            for(int i = 0; i < buf.Length; i++)
             {
 
                 skipWhite(ref i);
 
-                switch(buf[i])
+                switch((char)buf[i])
                 {
                     case '#':
                         skipComment(ref i);
@@ -62,13 +71,13 @@ namespace properties
                         break;
                     case '\r':
                     case '\n':
-                        line++;
+                        //line++;
                         tokens.add(TokenType.ENDLINE);
                         break;
                     case '\'':
                     case '"':
                         readRString(ref i);//如果存在  name =Donald Trump 必须加引号  => name ="Donald Trump"
-                        goto default;
+                        break;
                     default:
                         readString(ref i);
                         break;
@@ -79,42 +88,80 @@ namespace properties
         
         
         }
+
+        /*
+         解析带有双引号的value
+         */
         void readRString(ref int i)
         {
             StringBuilder stringBuilder = new StringBuilder();
+            i++;
             do
             {
-                if (buff[i] == '\r')
+                if (buf[i] == '\r')
                 {
                     throw new Exception("缺少双引号");
                 }
-                stringBuilder.Append(buf[i]);
+                stringBuilder.Append((char)buf[i]);
 
                 //if()
                 i++;
-            } while (buff[i] != '"');
+            } while (buf[i] != '"');
 
             tokens.add(TokenType.STRING,stringBuilder.ToString());
             // return stringBuilder.ToString();
         }
-
+        /*
+        解析不带有双引号的value
+     */
         void readString(ref int i)
         {
             StringBuilder stringBuilder = new StringBuilder();
             do
             {
-                if (buff[i] == '\r')
+                //if (buff[i] == '\r')
+                //{
+                //    throw new Exception("缺少双引号");
+                //}
+
+                if (buf[i] == '\r')
                 {
-                    throw new Exception("缺少双引号");
+                    i++;
+                    continue;
                 }
-                stringBuilder.Append(buf[i]);
+                stringBuilder.Append((char)buf[i]);
 
                 //if()
                 i++;
-            } while (buff[i] != '"');
+
+
+                if (i >= buf.Length)
+                {
+                    tokens.add(TokenType.STRING, stringBuilder.ToString());
+                    tokens.add(TokenType.END);
+                    return;
+                }
+                if (buf[i] == '=')
+                {
+                    tokens.add(TokenType.STRING, stringBuilder.ToString());
+                    tokens.add(TokenType.EQUAL);
+                    return;
+                }
+
+
+            } while (buf[i] !='\n') ;
 
             tokens.add(TokenType.STRING, stringBuilder.ToString());
+            tokens.add(TokenType.ENDLINE);
             // return stringBuilder.ToString();
+        }
+
+
+        public void printTokenList()
+        {
+
+            tokens.printAllToken();
+
         }
     }
 }

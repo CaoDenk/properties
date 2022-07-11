@@ -18,5 +18,21 @@ namespace properties
         {
             this.value = value;
         }
+        public override string ToString()
+        {
+           switch(type)
+            {
+                case TokenType.STRING:
+                    return "string:"+value;
+                case TokenType.EQUAL:
+                    return "=";
+                case TokenType.ENDLINE:
+                    return "endline";
+                case TokenType.END:
+                    return "end";
+                default:
+                    return "";
+            }
+        }
     }
 }
