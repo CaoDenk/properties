@@ -8,8 +8,8 @@ namespace properties
 {
     internal class Token
     {
-        TokenType type;
-        object? value;
+        public TokenType type { get; }
+        public object? value { get; }
         public  Token(TokenType type)
         {
             this.type = type;

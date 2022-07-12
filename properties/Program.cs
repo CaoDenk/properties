@@ -14,9 +14,10 @@
         {
             ProperiesParser parser = new ProperiesParser();
             parser.openFile("conf.properties");
-            parser.parse();
+            parser.lex();
             //foreach(var i in parser.tokens)
             parser.printTokenList();
+            //parser.parse();
 
         }
     }

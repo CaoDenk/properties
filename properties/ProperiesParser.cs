@@ -8,58 +8,44 @@ namespace properties
 {
     internal class ProperiesParser
     {
-      int line = 1;
-        //int len;
-      TokenList tokens  =new TokenList();
-      byte[] buf;
-        //string buf;
-      public  void openFile(string filePath)
+
+        Dictionary<string, string> properies = new Dictionary<string, string>();
+        int line = 1;
+        TokenList tokens = new TokenList();
+        char[] buf;
+        public void openFile(string filePath)
         {
             //int buffSize = 1024 * 1024 * 4;//4M
             FileInfo fi = new FileInfo(filePath);
             int buffSize = (int)fi.Length;//配置文件大小不可能超过int的范围
 
-
-
-
-            
-            buf = new byte[buffSize];
+            byte[] bytes = new byte[buffSize + 1];
             FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-            fileStream.Read(buf, 0, buffSize);
-
-            
-
+            fileStream.Read(bytes, 0, buffSize);
             fileStream.Close();
+            buf = Encoding.Default.GetChars(bytes);
 
         }
-        void skipWhite(ref int i)
-        {
-            while (i < buf.Length && (buf[i] == ' '
-                || buf[i] == '\t'
-                || buf[i] == '\b'))
-            {
-                i++;
-            }
-
-        }
+   
         void skipComment(ref int i)
         {
             do
             {
                 i++;
-            } while (i < buf.Length && buf[i] != '\n');
 
+            } while (i < buf.Length && buf[i] != '\n');
+            tokens.add(TokenType.ENDLINE);
 
         }
-        public void parse()
-        { 
-           
-            for(int i = 0; i < buf.Length; i++)
+        public void lex()
+        {
+
+            for (int i = 0; i < buf.Length; i++)
             {
 
-                skipWhite(ref i);
+                //skipWhite(ref i);
 
-                switch((char)buf[i])
+                switch (buf[i])
                 {
                     case '#':
                         skipComment(ref i);
@@ -70,13 +56,26 @@ namespace properties
                         }
                         break;
                     case '\r':
+                        if (buf[i + 1] == '\n')
+                        {
+                            i += 2;
+                            //if(tokens.Peek.type!=TokenType.ENDLINE)
+                                tokens.add(TokenType.ENDLINE);
+
+                        }
+                        break;
                     case '\n':
                         //line++;
+                        //if (tokens.Peek.type != TokenType.ENDLINE)
+                        //    tokens.add(TokenType.ENDLINE);
                         tokens.add(TokenType.ENDLINE);
                         break;
                     case '\'':
                     case '"':
                         readRString(ref i);//如果存在  name =Donald Trump 必须加引号  => name ="Donald Trump"
+                        break;
+                    case ' ':
+                    case '\t':
                         break;
                     default:
                         readString(ref i);
@@ -85,8 +84,9 @@ namespace properties
 
 
             }
-        
-        
+
+            tokens.add(TokenType.ENDLINE);
+            tokens.add(TokenType.END);
         }
 
         /*
@@ -95,72 +95,149 @@ namespace properties
         void readRString(ref int i)
         {
             StringBuilder stringBuilder = new StringBuilder();
+            //改成while
             i++;
-            do
+            while (buf[i] != '"')
             {
-                if (buf[i] == '\r')
+
+                stringBuilder.Append(buf[i]);
+                i++;
+                if (i >= buf.Length - 1)
                 {
                     throw new Exception("缺少双引号");
                 }
-                stringBuilder.Append((char)buf[i]);
 
-                //if()
-                i++;
-            } while (buf[i] != '"');
+            }
 
-            tokens.add(TokenType.STRING,stringBuilder.ToString());
-            // return stringBuilder.ToString();
+            tokens.add(TokenType.STRING, stringBuilder.ToString());
         }
         /*
         解析不带有双引号的value
-     */
-        void readString(ref int i)
-        {
-            StringBuilder stringBuilder = new StringBuilder();
-            do
-            {
-                //if (buff[i] == '\r')
-                //{
-                //    throw new Exception("缺少双引号");
-                //}
-
-                if (buf[i] == '\r')
-                {
-                    i++;
-                    continue;
-                }
-                stringBuilder.Append((char)buf[i]);
-
-                //if()
-                i++;
+        第一个一定是字符
+        */
+        //void readString(ref int i)
+        //{
+        //    StringBuilder stringBuilder = new StringBuilder();
+          
+        //    //skipWhiteSpace(ref i);  //__  跳过空格
 
 
-                if (i >= buf.Length)
-                {
-                    tokens.add(TokenType.STRING, stringBuilder.ToString());
-                    tokens.add(TokenType.END);
-                    return;
-                }
-                if (buf[i] == '=')
-                {
-                    tokens.add(TokenType.STRING, stringBuilder.ToString());
-                    tokens.add(TokenType.EQUAL);
-                    return;
-                }
+
+        //    do
+        //    {
+
+        //        if (buf[i] == '\r' && buf[i+1]=='\n')
+        //        {
+        //            i++;
+        //            continue;
+        //        }
+
+        //        //if (buf[i] == '#')
+        //        //{
+        //        //    skipComment(ref i);
+        //        //    tokens.add(TokenType.STRING, stringBuilder.ToString());
+        //        //    return;
+        //        //}
+        //        stringBuilder.Append(buf[i]);
+        //        i++;
+
+        //        if (i >= buf.Length - 1)
+        //        {
+        //            tokens.add(TokenType.STRING, stringBuilder.ToString());
+        //            //tokens.add(TokenType.END);
+        //            return;
+        //        }
+        //        if (buf[i] == '=')
+        //        {
+        //            tokens.add(TokenType.STRING, stringBuilder.ToString());
+        //            tokens.add(TokenType.EQUAL);
+        //            return;
+        //        }
 
 
-            } while (buf[i] !='\n') ;
+        //    } while (buf[i] != '\n');
 
-            tokens.add(TokenType.STRING, stringBuilder.ToString());
-            tokens.add(TokenType.ENDLINE);
-            // return stringBuilder.ToString();
-        }
+        //    tokens.add(TokenType.STRING, stringBuilder.ToString());
+        //   // tokens.add(TokenType.ENDLINE);
+        //    // return stringBuilder.ToString();
+        //}
 
 
         public void printTokenList()
         {
 
             tokens.printAllToken();
+
+        }
+
+        public void parse()
+        {
+
+            int j = 0;
+
+            while (tokens[j].type != TokenType.END)
+            {
+
+                while (tokens[j].type == TokenType.ENDLINE)
+                {
+                    line++;
+                    j++;
+                }
+
+                if (tokens[j].type == TokenType.STRING)
+                {
+
+                    if (match(j))
+                    {
+
+                        string key = (string)tokens[j].value;
+                        string value = (string)tokens[j + 2].value;
+                        properies.Add(key, value);
+                        j += 4;
+                        line++;
+                    }
+
+                    else
+                    {
+                        throw new Exception("在" + line + "行，格式错误");
+                    }
+                }
+
+            }
+
+        
+
+        }
+
+        bool match( int j)
+        {
+            if (
+                tokens[j + 1].type == TokenType.EQUAL 
+                && tokens[j+2].type==TokenType.STRING
+                && tokens[j+3].type==TokenType.ENDLINE)
+            { 
+                return true;
+            }
+
+            return false;
+        }
+        void skipWhiteSpace(ref int i)
+        {
+            while (i<buf.Length&&(buf[i] == ' ' || buf[i] == '\t'))
+            {
+                i++;
+            }
+        }
+        bool isWhiteSpace(int i)
+        {
+
+            return buf[i] == ' ' || buf[i]=='\t';
+        }
+
+        void readString(ref int i)
+        {
+
+
 
         }
     }
