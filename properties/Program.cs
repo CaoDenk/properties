@@ -17,7 +17,7 @@
             parser.lex();
             //foreach(var i in parser.tokens)
             parser.printTokenList();
-            //parser.parse();
+            parser.parse();
 
         }
     }

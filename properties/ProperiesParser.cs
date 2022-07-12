@@ -40,7 +40,7 @@ namespace properties
         public void lex()
         {
 
-            for (int i = 0; i < buf.Length; i++)
+            for (int i = 0;i<buf.Length ; i++)
             {
 
                 //skipWhite(ref i);
@@ -77,6 +77,13 @@ namespace properties
                     case ' ':
                     case '\t':
                         break;
+                    case '\0':
+                        if(tokens.Peek.type!=TokenType.ENDLINE)
+                        {
+                            tokens.add(TokenType.ENDLINE);
+                        }
+                        tokens.add(TokenType.END);
+                        return;
                     default:
                         readString(ref i);
                         break;
@@ -84,9 +91,10 @@ namespace properties
 
 
             }
-
-            tokens.add(TokenType.ENDLINE);
+           // if(tokens.Peek.type!=TokenType.END)
             tokens.add(TokenType.END);
+            //tokens.add(TokenType.ENDLINE);
+            //tokens.add(TokenType.END);
         }
 
         /*
@@ -102,13 +110,19 @@ namespace properties
 
                 stringBuilder.Append(buf[i]);
                 i++;
-                if (i >= buf.Length - 1)
+                if (buf[i]=='\0')
                 {
                     throw new Exception("缺少双引号");
                 }
 
             }
-
+            //if (buf[i] == '\0')
+            //{
+            //    tokens.add(TokenType.STRING, stringBuilder.ToString());
+            //    tokens.add(TokenType.ENDLINE);
+            //    tokens.add(TokenType.END);
+            //    return;
+            //}
             tokens.add(TokenType.STRING, stringBuilder.ToString());
         }
         /*
@@ -189,7 +203,6 @@ namespace properties
 
                     if (match(j))
                     {
-
                         string key = (string)tokens[j].value;
                         string value = (string)tokens[j + 2].value;
                         properies.Add(key, value);
@@ -221,24 +234,64 @@ namespace properties
 
             return false;
         }
-        void skipWhiteSpace(ref int i)
-        {
-            while (i<buf.Length&&(buf[i] == ' ' || buf[i] == '\t'))
-            {
-                i++;
-            }
-        }
-        bool isWhiteSpace(int i)
-        {
-
-            return buf[i] == ' ' || buf[i]=='\t';
-        }
 
         void readString(ref int i)
         {
+            //while (buf[i]==' ' || buf[i]=='\t')
+            //{
+            //    i++;
+            //}
+            StringBuilder stringBuilder = new();
+            while (i<buf.Length-1)
+            {
+                stringBuilder.Append(buf[i]);
+                i++;
+                if (buf[i]=='=')
+                {
+                    tokens.add(TokenType.STRING, stringBuilder.ToString());
+                    tokens.add(TokenType.EQUAL);
+                    return;
+                }
+                if(buf[i]==' ' || buf[i]=='\t')
+                {
+                    tokens.add(TokenType.STRING, stringBuilder.ToString());
+                    return;
+                }
+                if (buf[i]=='#')
+                {
+                    tokens.add(TokenType.STRING, stringBuilder.ToString());
+                    skipComment(ref i);
+                    return;
+                }
+                if (buf[i] == '\r')
+                {
+                   
+                    if (buf[i+1]=='\n')
+                    {
+                        tokens.add(TokenType.STRING, stringBuilder.ToString());
+                        tokens.add(TokenType.ENDLINE);
+                        i++;
+                        return;
+                    }
+                }
 
+                if (buf[i]=='\n')
+                {
+                    tokens.add(TokenType.STRING, stringBuilder.ToString());
+                    tokens.add(TokenType.ENDLINE);
+                    return;
+                }
+               
 
+            }
 
+            if (buf[i] == '\0')
+            {
+                tokens.add(TokenType.STRING, stringBuilder.ToString());
+                tokens.add(TokenType.ENDLINE);
+                tokens.add(TokenType.END);
+                return;
+            }
         }
     }
 }
