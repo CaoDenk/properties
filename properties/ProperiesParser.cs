@@ -58,7 +58,7 @@ namespace properties
                     case '\r':
                         if (buf[i + 1] == '\n')
                         {
-                            i += 2;
+                            i += 1;
                             tokens.add(TokenType.ENDLINE);
                         }
                         break;
